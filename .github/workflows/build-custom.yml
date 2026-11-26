@@ -20,20 +20,13 @@ jobs:
 
       - name: Run full build
         run: |
-          mkdir -p "$PWD/out"
-          set +e
-          ./tools/docker-build/build_all.sh "$PWD/out"
-          RC=$?
-          if [ $RC -eq 2 ]; then
-            ./tools/docker-build/build_all.sh "$PWD" "$PWD/out"
-            RC=$?
-          fi
-          exit $RC
+          VER=$(tr -d '[:space:]' < VERSION)
+          ./tools/docker-build/build_all.sh "$PWD" "$PWD/out" "$VER"
 
       - name: Collect PKG and PRX files
         run: |
           mkdir -p artifacts
-          find . -maxdepth 5 \( -name '*.pkg' -o -name '*.prx' \) -not -path './artifacts/*' -exec cp {} artifacts/ \;
+          find "$PWD/out" -type f \( -name '*.pkg' -o -name '*.prx' \) -exec cp {} artifacts/ \;
           ls -la artifacts
 
       - name: Upload Artifacts
