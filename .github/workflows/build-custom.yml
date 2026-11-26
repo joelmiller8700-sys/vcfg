@@ -1,0 +1,35 @@
+name: Build Custom VCFG PKG
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x tools/docker-build/*.sh
+
+      - name: Fetch dependencies
+        run: ./tools/docker-build/fetch-deps.sh
+
+      - name: Build docker images
+        run: ./tools/docker-build/build-images.sh
+
+      - name: Run full build
+        run: ./tools/docker-build/build_all.sh
+
+      - name: Collect PKG and PRX files
+        run: |
+          mkdir -p out
+          find . -maxdepth 4 \( -name '*.pkg' -o -name '*.prx' \) -not -path './out/*' -exec cp {} out/ \;
+          ls -la out
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vcfg-custom-build
+          path: out/*
