@@ -19,17 +19,26 @@ jobs:
         run: ./tools/docker-build/build-images.sh
 
       - name: Run full build
-        run: ./tools/docker-build/build_all.sh
+        run: |
+          mkdir -p "$PWD/out"
+          set +e
+          ./tools/docker-build/build_all.sh "$PWD/out"
+          RC=$?
+          if [ $RC -eq 2 ]; then
+            ./tools/docker-build/build_all.sh "$PWD" "$PWD/out"
+            RC=$?
+          fi
+          exit $RC
 
       - name: Collect PKG and PRX files
         run: |
-          mkdir -p out
-          find . -maxdepth 4 \( -name '*.pkg' -o -name '*.prx' \) -not -path './out/*' -exec cp {} out/ \;
-          ls -la out
+          mkdir -p artifacts
+          find . -maxdepth 5 \( -name '*.pkg' -o -name '*.prx' \) -not -path './artifacts/*' -exec cp {} artifacts/ \;
+          ls -la artifacts
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: vcfg-custom-build
-          path: out/*
+          path: artifacts/*
